@@ -43,6 +43,28 @@ bool MyTCP::hasError() {
     return false;
 }
 
+void MyTCP::destroy() {
+    if( msocket == -1){
+        return;
+    }
+    
+	// 关闭
+	struct linger so_linger;
+	so_linger.l_onoff = 1;
+	so_linger.l_linger = 500;
+	int ret = setsockopt(msocket, SOL_SOCKET, SO_LINGER, (const char*)&so_linger, sizeof(so_linger));
+    
+    closeSocket();
+    
+	msocket = -1;
+	mInLen = 0;
+	mInStart = 0;
+	mOutLen = 0;
+    
+	memset(mInputStream, 0, sizeof(INBUFSIZE));
+	memset(mOutputStream, 0, sizeof(OUTBUFSIZE));
+}
+
 static int select_version(int socket_fd, size_t timeout) {
     fd_set rset, wset;
     struct timeval tval;
@@ -120,7 +142,7 @@ bool MyTCP::create(const char* ipserver, const int port, int blockSeconds, bool 
 	setsockopt(msocket, SOL_SOCKET, SO_LINGER, (const char*)&so_linger, sizeof(so_linger));
     
 	return true;
-}  
+}
 
 void MyTCP::flush(){
     ssize_t fu = send(msocket, mOutputStream, mOutLen, 0);
@@ -148,6 +170,108 @@ bool MyTCP::sendMsg(const char *msg, ssize_t len) {
     memcpy(mOutputStream + mOutLen, msg, len);
     mOutLen += len;
     flush();
-    return false;
+    return true;
+}
+
+bool MyTCP::recvFromSocket() {
+    if (mInLen > INBUFSIZE || msocket == -1) {
+        return false;
+    }
+    ssize_t use = 0;
+    if (mInStart + mInLen >= INBUFSIZE) {       //已经绕过环尾，可用空间就是总大小-已用大小
+        use = INBUFSIZE - mInLen;
+    } else {    //先填满到环尾，再从环头填充
+        use = INBUFSIZE - (mInStart + mInLen);
+    }
+    int savepos = (mInStart + mInLen) % INBUFSIZE;
+    ssize_t inlen = recv(msocket, mInputStream + savepos, use, 0);
+    if (inlen > 0) {
+        mInLen += inlen;
+        if (mInLen > INBUFSIZE) {
+            return false;
+        }
+        if (inlen == use && mInLen < INBUFSIZE) {   //后一个条件必须，也屏蔽了前面已绕过环尾的情况
+            int left = INBUFSIZE - mInLen;
+            ssize_t inlen1 = recv(msocket, mInputStream, left, 0);
+            if (inlen1 > 0) {
+                mInLen += inlen1;
+                if (mInLen > INBUFSIZE) {
+                    return false;
+                }
+            } else if(inlen1 == 0) {
+                destroy();
+                return false;
+            } else {
+                if (hasError()) {
+                    destroy();
+                    return false;
+                }
+            }
+        }
+    } else if(inlen == 0) { //??
+        destroy();
+        return false;
+    } else {
+        if (hasError()) {
+            destroy();
+            return false;
+        }
+        //??
+    }
+    return true;
+}
+
+bool MyTCP::receiveMsg(char *msg, ssize_t &len) {
+    if (msocket == -1 || msg == nullptr) {
+        return false;
+    }
+    if (mInLen < 4) {
+        bool success = recvFromSocket();
+        if (!success || mInLen < 4) {
+            return false;
+        }
+    }
+    int packsize = 0;
+    if (mInLen == 4) {  //如果inlen == 4，则不管开头存的数据是多少，大小只是4
+        packsize = 4;
+    } else {    //考虑头部环绕的可能
+        if (mInStart + 4 > INBUFSIZE) {
+            int aLen = INBUFSIZE - mInStart;
+            char* cLen = new char[4];
+            memset(cLen, 0, 4);
+            memcpy(cLen, mInputStream + mInStart, aLen);
+            memcpy(cLen + aLen, mInputStream, 4 - aLen);
+            sscanf(cLen, "%4d", &packsize);
+            delete [] cLen;
+            cLen = NULL;
+        } else {
+            sscanf(mInputStream + mInStart, "%4d", &packsize);
+        }
+        packsize += 4;
+    }
+    if (packsize > _MAX_MSGSIZE) {  //等于抛弃已有数据
+        mInStart = 0;
+        mInLen = 0;
+        return false;
+    }
+    if (packsize > mInLen) {    //有数据还没到
+        bool success = recvFromSocket();
+        if (!success || packsize > mInLen) {    //再次请求失败或者仍然数据不够
+            return false;
+        }
+    }
+    //拷贝数据
+    if (mInStart + mInLen > INBUFSIZE) {    //有回环
+        int first_len = INBUFSIZE - mInStart;
+        memcpy(msg, mInputStream + mInStart, first_len);
+        memcpy(msg + first_len, mInputStream, packsize - first_len);
+        len = packsize;
+    } else {    //不用inlen，而是用packsize，理论上二者应该相等，但packsize更可靠些
+        len = packsize;
+        memcpy(msg, mInputStream + mInStart, packsize);
+    }
+    mInStart = (mInStart + mInLen) % INBUFSIZE;
+    mInLen = 0;
+    return true;
 }
 

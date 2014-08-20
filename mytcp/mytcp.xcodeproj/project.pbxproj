@@ -33,6 +33,13 @@
 		060F708419A1E1D7001AD967 /* mytcp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mytcp.h; sourceTree = "<group>"; };
 		060F708819A1EBE9001AD967 /* CCTCPSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCTCPSocket.h; sourceTree = "<group>"; };
 		060F708919A1EBFE001AD967 /* CCTCPSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CCTCPSocket.cpp; sourceTree = "<group>"; };
+		060F718C19A49897001AD967 /* CConnectUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CConnectUtil.cpp; sourceTree = "<group>"; };
+		060F718D19A49897001AD967 /* CConnectUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CConnectUtil.h; sourceTree = "<group>"; };
+		060F718E19A49897001AD967 /* TCPClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TCPClient.cpp; sourceTree = "<group>"; };
+		060F718F19A49897001AD967 /* TCPClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCPClient.h; sourceTree = "<group>"; };
+		060F719019A49897001AD967 /* TCPDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCPDelegate.h; sourceTree = "<group>"; };
+		060F719119A49897001AD967 /* TCPSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TCPSocket.cpp; sourceTree = "<group>"; };
+		060F719219A49897001AD967 /* TCPSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCPSocket.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -49,6 +56,7 @@
 		060F706E19A1E1C1001AD967 = {
 			isa = PBXGroup;
 			children = (
+				060F718B19A49897001AD967 /* tcp_socket */,
 				060F708919A1EBFE001AD967 /* CCTCPSocket.cpp */,
 				060F708819A1EBE9001AD967 /* CCTCPSocket.h */,
 				060F707919A1E1C1001AD967 /* mytcp */,
@@ -73,6 +81,20 @@
 				060F708419A1E1D7001AD967 /* mytcp.h */,
 			);
 			path = mytcp;
+			sourceTree = "<group>";
+		};
+		060F718B19A49897001AD967 /* tcp_socket */ = {
+			isa = PBXGroup;
+			children = (
+				060F718C19A49897001AD967 /* CConnectUtil.cpp */,
+				060F718D19A49897001AD967 /* CConnectUtil.h */,
+				060F718E19A49897001AD967 /* TCPClient.cpp */,
+				060F718F19A49897001AD967 /* TCPClient.h */,
+				060F719019A49897001AD967 /* TCPDelegate.h */,
+				060F719119A49897001AD967 /* TCPSocket.cpp */,
+				060F719219A49897001AD967 /* TCPSocket.h */,
+			);
+			path = tcp_socket;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -237,6 +259,7 @@
 				060F708219A1E1C1001AD967 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
